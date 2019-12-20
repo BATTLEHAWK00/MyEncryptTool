@@ -15,6 +15,10 @@ namespace WindowsFormsApp3
         {
             InitializeComponent();
             listBox1.TopIndex = 0;
+            if (Program.global_path != null)
+                textBox1.Text = Program.global_path;
+            if (Program.global_password != null)
+                textBox2.Text = Program.global_password;
         }
 
         private void button1_Click(object sender, EventArgs e)
