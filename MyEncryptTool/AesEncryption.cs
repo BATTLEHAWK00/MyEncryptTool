@@ -323,7 +323,7 @@ namespace WindowsFormsApp3
                     {
                         byte[] data = (byte[])chunk[0];
                         byte[] plaintext = new byte[data.Length];
-
+                        
                         if ((bool)chunk[1])
                         {
                             plaintext = ict.TransformFinalBlock(data, 0, data.Length);
@@ -540,7 +540,7 @@ namespace WindowsFormsApp3
         {
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
-                int size = 1024;
+                int size = Int32.MaxValue / 1024;
                 end = (int)fs.Length - end;
                 int pos = fs.Read(new byte[beg], 0, beg);
 
@@ -548,7 +548,7 @@ namespace WindowsFormsApp3
                 {
                     size = (end - pos > size) ? size : end - pos;
                     byte[] data = new byte[size];
-                    pos += fs.Read(data, 0, size);
+                    pos += fs.Read(data, 0,size);
 
                     yield return new Object[] { data, (pos == end) };
                 }

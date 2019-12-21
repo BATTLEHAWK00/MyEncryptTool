@@ -23,9 +23,18 @@ namespace WindowsFormsApp3
 
         private void button1_Click(object sender, EventArgs e)
         {
+            Thread A;
+            if (File.Exists(textBox1.Text))
+                A = new Thread(new ThreadStart(() => encryptsingle(textBox1.Text)));
+            else if(Directory.Exists(textBox1.Text))
+                A = new Thread(encryptfiles);
+            else
+            {
+                MessageBox.Show("文件或文件夹不存在！");
+                return;
+            }
             listBox1.Items.Clear();
-            Thread A = new Thread(encryptfiles);
-            A.IsBackground = false;
+            A.IsBackground = true;
             A.Start();
         }
         void encryptfiles()
@@ -44,6 +53,9 @@ namespace WindowsFormsApp3
                 this.progressBar1.Maximum = total;
                 this.button1.Enabled = false;
                 this.button2.Enabled = false;
+                this.textBox1.Enabled = false;
+                this.textBox2.Enabled = false;
+                this.label3.Text = "处理中……";
             }));
             isProcessing = true;
             DirectoryInfo temp = new DirectoryInfo(textBox1.Text);
@@ -60,6 +72,8 @@ namespace WindowsFormsApp3
             {
                 this.button1.Enabled = true;
                 this.button2.Enabled = true;
+                this.textBox1.Enabled = true;
+                this.textBox2.Enabled = true;
                 this.label3.Text = "完成！";
             }));
             isProcessing = false;
@@ -93,7 +107,7 @@ namespace WindowsFormsApp3
                 {
                     this.progressBar1.Value = prog;
                     this.label3.Text = String.Format("正在处理第{0}个文件，共{1}个文件\n路径:{2}", prog, size, targetfile);
-                    this.listBox1.TopIndex = this.listBox1.Items.Count - (int)(this.listBox1.Height / this.listBox1.ItemHeight);
+                    this.listBox1.TopIndex = this.listBox1.Items.Count - (int)(this.listBox1.Height / this.listBox1.ItemHeight)+2;
                 }));
                 file = null;
                 if (files.Count == 0)
@@ -118,6 +132,9 @@ namespace WindowsFormsApp3
                 this.progressBar1.Maximum = total;
                 this.button1.Enabled = false;
                 this.button2.Enabled = false;
+                this.textBox1.Enabled = false;
+                this.textBox2.Enabled = false;
+                this.label3.Text = "处理中……";
             }));
             DirectoryInfo temp = new DirectoryInfo(textBox1.Text);
             targetdir = Path.Combine(temp.Parent.FullName, Regex.Replace(temp.Name, "_Encrypted", "_Decrypted"));
@@ -133,6 +150,8 @@ namespace WindowsFormsApp3
             {
                 this.button1.Enabled = true;
                 this.button2.Enabled = true;
+                this.textBox1.Enabled = true;
+                this.textBox2.Enabled = true;
                 this.label3.Text = "完成！";
             }));
             isProcessing = false;
@@ -162,13 +181,87 @@ namespace WindowsFormsApp3
                 {
                     this.progressBar1.Value = prog;
                     this.label3.Text = String.Format("正在处理第{0}个文件，共{1}个文件\n路径:{2}", prog, size, targetfile);
-                    this.listBox1.TopIndex = this.listBox1.Items.Count - (int)(this.listBox1.Height / this.listBox1.ItemHeight);
+                    this.listBox1.TopIndex = this.listBox1.Items.Count - (int)(this.listBox1.Height / this.listBox1.ItemHeight)+2;
                 }));
                 file = null;
                 if (files.Count == 0)
                     return;
                 file = files.Dequeue();
             }
+        }
+        void encryptsingle(string file)
+        {
+            if (textBox2.Text == null || textBox2.Text == "")
+            { MessageBox.Show("密码不能为空！"); return; }
+            this.Invoke(new Action(delegate
+            {
+                this.button1.Enabled = false;
+                this.button2.Enabled = false;
+                this.textBox1.Enabled = false;
+                this.textBox2.Enabled = false;
+                this.label3.Text = String.Format("正在处理:{0}", file);
+                this.progressBar1.Value = this.progressBar1.Minimum;
+            }));
+            AesEncryption encryption = new AesEncryption("cfb");
+            if (file == null)
+                return;
+            FileInfo temp = new FileInfo(file);
+            string msg;
+            if (temp.Extension != ".enc")
+                msg = encryption.EncryptFile(file, file, textBox2.Text);
+            else
+                msg = null;
+            if (msg != null)
+                this.Invoke(new Action(() => this.listBox1.Items.Add("已加密：" + file + "\n")));
+            else
+                this.Invoke(new Action(() => this.listBox1.Items.Add("加密失败：" + file + "\n")));
+            this.Invoke(new Action(delegate
+            {
+                this.progressBar1.Value = this.progressBar1.Maximum;
+                this.listBox1.TopIndex = this.listBox1.Items.Count - (int)(this.listBox1.Height / this.listBox1.ItemHeight) + 2;
+                this.button1.Enabled = true;
+                this.button2.Enabled = true;
+                this.textBox1.Enabled = true;
+                this.textBox2.Enabled = true;
+                this.label3.Text = String.Format("完成！");
+            }));
+        }
+        void decryptsingle(string file)
+        {
+            if (textBox2.Text == null || textBox2.Text == "")
+            { MessageBox.Show("密码不能为空！"); return; }
+            this.Invoke(new Action(delegate
+            {
+                this.button1.Enabled = false;
+                this.button2.Enabled = false;
+                this.textBox1.Enabled = false;
+                this.textBox2.Enabled = false;
+                this.label3.Text = String.Format("正在处理:{0}", file);
+                this.progressBar1.Value = this.progressBar1.Minimum;
+            }));
+            AesEncryption encryption = new AesEncryption("cfb");
+            if (file == null)
+                return;
+            FileInfo temp = new FileInfo(file);
+            string msg;
+            if (temp.Extension == ".enc")
+                msg = encryption.DecryptFile(file,file, textBox2.Text);
+            else
+                msg = null;
+            if (msg != null)
+                this.Invoke(new Action(() => this.listBox1.Items.Add("已解密：" + file + "\n")));
+            else
+                this.Invoke(new Action(() => this.listBox1.Items.Add("解密失败：" + file + "\n")));
+            this.Invoke(new Action(delegate
+            {
+                this.progressBar1.Value = this.progressBar1.Maximum;
+                this.listBox1.TopIndex = this.listBox1.Items.Count - (int)(this.listBox1.Height / this.listBox1.ItemHeight) + 2;
+                this.button1.Enabled = true;
+                this.button2.Enabled = true;
+                this.textBox1.Enabled = true;
+                this.textBox2.Enabled = true;
+                this.label3.Text = String.Format("完成！");
+            }));
         }
         private void textBox1_DragDrop(object sender, DragEventArgs e)
         {
@@ -215,9 +308,18 @@ namespace WindowsFormsApp3
 
         private void button2_Click(object sender, EventArgs e)
         {
+            Thread A;
+            if (File.Exists(textBox1.Text))
+                A = new Thread(new ThreadStart(() => decryptsingle(textBox1.Text)));
+            else if (Directory.Exists(textBox1.Text))
+                A = new Thread(decryptfiles);
+            else
+            {
+                MessageBox.Show("文件或文件夹不存在！");
+                return;
+            }
             listBox1.Items.Clear();
-            Thread A = new Thread(decryptfiles);
-            A.IsBackground = false;
+            A.IsBackground = true;
             A.Start();
         }
 
@@ -225,13 +327,15 @@ namespace WindowsFormsApp3
         {
             if (isProcessing)
             {
-                MessageBox.Show("文件正在处理中！");
-                e.Cancel = true;
+                DialogResult dr;
+                dr = MessageBox.Show("文件正在处理中！确定要退出吗？", "提示", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                if(dr == DialogResult.OK)
+                    Application.ExitThread();
+                else
+                    e.Cancel = true;
             }
             else
-            {
                 Application.ExitThread();
-            }
         }
     }
 }

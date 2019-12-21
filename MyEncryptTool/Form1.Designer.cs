@@ -54,9 +54,9 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(12, 9);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(286, 15);
+            this.label1.Size = new System.Drawing.Size(331, 15);
             this.label1.TabIndex = 1;
-            this.label1.Text = "输入加密\\解密的文件夹路径(支持拖放)：";
+            this.label1.Text = "输入加密\\解密的文件或文件夹路径(支持拖放)：";
             // 
             // button1
             // 
